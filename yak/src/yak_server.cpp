@@ -15,6 +15,12 @@ yak::FusionServer::FusionServer(const kfusion::KinFuParams& params, const Eigen:
 
 bool yak::FusionServer::fuse(const cv::Mat& depth_data, const Eigen::Affine3f& world_to_camera)
 {
+  Eigen::Affine3f icp_movement = Eigen::Affine3f::Identity();
+  return fuse(depth_data, world_to_camera, icp_movement);
+}
+
+bool yak::FusionServer::fuse(const cv::Mat& depth_data, const Eigen::Affine3f& world_to_camera, Eigen::Affine3f& icp_movement)
+{
   // world_to_volume * world_to_camera
   // we want volume to camera
   const Eigen::Affine3f current_camera_in_volume = volume_to_world_ * world_to_camera;
@@ -29,7 +35,9 @@ bool yak::FusionServer::fuse(const cv::Mat& depth_data, const Eigen::Affine3f& w
   depthDevice_.upload(depth_data.data, depth_data.step, depth_data.rows, depth_data.cols);
 
   // Launch the fusion process
-  bool result = kinfu_->operator()(motion, current_camera_in_volume, last_camera_pose_, depthDevice_);
+  kfusion::Affine3f icp_movement_tmp = icp_movement;
+  bool result = kinfu_->operator()(motion, current_camera_in_volume, last_camera_pose_, depthDevice_, icp_movement_tmp);
+  icp_movement = icp_movement_tmp;
 
   // Update the "last camera pose" TODO: Do I update this if the fusion step failed?
   last_camera_pose_ = current_camera_in_volume;

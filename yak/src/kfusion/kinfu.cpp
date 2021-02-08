@@ -29,7 +29,9 @@ kfusion::KinFuParams kfusion::KinFuParams::default_params()
 
   p.icp_truncate_depth_dist = 0.f;    // meters, disabled
   p.icp_dist_thres = 0.1f;            // meters
+  p.icp_final_dist_thres = 1.0f;            // meters
   p.icp_angle_thres = deg2rad(30.f);  // radians
+  p.icp_final_angle_thres = deg2rad(90.f);  // radians
   p.icp_iter_num.assign(iters, iters + levels);
 
   p.tsdf_min_camera_movement = 0.f;  // meters, disabled
@@ -164,7 +166,37 @@ bool kfusion::KinFu::operator()(const Affine3f& inputCameraMotion,
                                 const Affine3f& currentCameraPose,
                                 const Affine3f& previousCameraPose,
                                 const kfusion::cuda::Depth& depth,
-                                const kfusion::cuda::Image& /*image*/)
+                                const cuda::Image& image)
+{
+  Affine3f icp_movement = Affine3f::Identity();
+  return operator()(inputCameraMotion,
+                    currentCameraPose,
+                    previousCameraPose,
+                    depth,
+                    image,
+                    icp_movement);
+}
+
+bool kfusion::KinFu::operator()(const Affine3f& inputCameraMotion,
+                                const Affine3f& currentCameraPose,
+                                const Affine3f& previousCameraPose,
+                                const kfusion::cuda::Depth& depth,
+                                Affine3f& icp_movement)
+{
+  return operator()(inputCameraMotion,
+                    currentCameraPose,
+                    previousCameraPose,
+                    depth,
+                    cuda::Image(),
+                    icp_movement);
+}
+
+bool kfusion::KinFu::operator()(const Affine3f& inputCameraMotion,
+                                const Affine3f& currentCameraPose,
+                                const Affine3f& previousCameraPose,
+                                const kfusion::cuda::Depth& depth,
+                                const kfusion::cuda::Image& /*image*/,
+                                Affine3f& icp_movement)
 {
   const KinFuParams& p = params_;
   const int LEVELS = icp_->getUsedLevelsNum();
@@ -236,7 +268,22 @@ bool kfusion::KinFu::operator()(const Affine3f& inputCameraMotion,
                                    curr_.normals_pyr,
                                    prev_.points_pyr,
                                    prev_.normals_pyr);
+      icp_movement = cameraMotion * cameraMotionCorrected.inv();
       cameraPoseCorrected = previousCameraPose * cameraMotionCorrected;
+      if (!ok)
+      {
+        std::cout << "\n[YAK_ERROR](209136.192011316): Using supplied pose because ICP failed\n\n";
+      }
+      else if (static_cast<float>(cv::norm(icp_movement.translation())) > params_.icp_final_dist_thres)
+      {
+        std::cout << "\n[YAK_ERROR](209136.192011316): Using supplied pose because ICP moved too far " << cv::norm(icp_movement.translation()) << " " << params_.icp_final_dist_thres << "\n\n";
+        ok = false;
+      }
+      else if (static_cast<float>(cv::norm(icp_movement.rvec())) > params_.icp_final_angle_thres)
+      {
+        std::cout << "\n[YAK_ERROR](209136.192011316): Using supplied pose because ICP rotated too far\n\n";
+        ok = false;
+      }
     }
     // else
     if(!ok || !params_.use_icp) // if not using icp or it fails, use the hints

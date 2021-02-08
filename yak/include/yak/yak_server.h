@@ -28,6 +28,8 @@ public:
 
   bool fuse(const cv::Mat& depth_data, const Eigen::Affine3f& world_to_camera);
 
+  bool fuse(const cv::Mat& depth_data, const Eigen::Affine3f& world_to_camera, Eigen::Affine3f& icp_movement);
+
   bool reset();
 
   bool resetWithNewParams(const kfusion::KinFuParams& params);

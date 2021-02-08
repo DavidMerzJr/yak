@@ -57,6 +57,10 @@ struct KF_EXPORTS KinFuParams
   float icp_dist_thres;
   /** @brief radians - Description TODO*/
   float icp_angle_thres;
+  /** @brief meters - icp results not used if translation is above this value */
+  float icp_final_dist_thres;
+  /** @brief radians - icp results not used if rotation is above this value */
+  float icp_final_angle_thres;
   /** @brief iterations for level index 0,1,..,3*/
   std::vector<int> icp_iter_num;
 
@@ -109,6 +113,19 @@ public:
                   const Affine3f& previousCameraPose,
                   const cuda::Depth& depth,
                   const cuda::Image& image = cuda::Image());
+
+  bool operator()(const Affine3f& inputCameraMotion,
+                  const Affine3f& currentCameraPose,
+                  const Affine3f& previousCameraPose,
+                  const cuda::Depth& depth,
+                  Affine3f& icp_movement);
+
+  bool operator()(const Affine3f& inputCameraMotion,
+                  const Affine3f& currentCameraPose,
+                  const Affine3f& previousCameraPose,
+                  const cuda::Depth& depth,
+                  const cuda::Image& image,
+                  Affine3f& icp_movement);
 
   void renderImage(cuda::Image& image, int flags = 0);
   void renderImage(cuda::Image& image, const Affine3f& pose, int flags = 0);
