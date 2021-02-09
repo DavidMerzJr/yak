@@ -272,17 +272,21 @@ bool kfusion::KinFu::operator()(const Affine3f& inputCameraMotion,
       cameraPoseCorrected = previousCameraPose * cameraMotionCorrected;
       if (!ok)
       {
-        std::cout << "\n[YAK_ERROR](209136.192011316): Using supplied pose because ICP failed\n\n";
+        std::cout << "[YAK_ERROR][209136.192011316]: Using supplied pose because ICP failed\n";
       }
       else if (static_cast<float>(cv::norm(icp_movement.translation())) > params_.icp_final_dist_thres)
       {
-        std::cout << "\n[YAK_ERROR](209136.192011316): Using supplied pose because ICP moved too far " << cv::norm(icp_movement.translation()) << " " << params_.icp_final_dist_thres << "\n\n";
+        std::cout << "[YAK_ERROR][209136.192011316]: Using supplied pose because ICP moved too far " << cv::norm(icp_movement.translation()) << " " << params_.icp_final_dist_thres << "\n";
         ok = false;
       }
       else if (static_cast<float>(cv::norm(icp_movement.rvec())) > params_.icp_final_angle_thres)
       {
-        std::cout << "\n[YAK_ERROR](209136.192011316): Using supplied pose because ICP rotated too far\n\n";
+        std::cout << "[YAK_ERROR][209136.192011316]: Using supplied pose because ICP rotated too far\n";
         ok = false;
+      }
+      else
+      {
+        std::cout << "[YAK_INFO ][209136.192011316]: ICP succeeded, using modified pose\n";
       }
     }
     // else
