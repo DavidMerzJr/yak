@@ -34,9 +34,13 @@ bool yak::FusionServer::fuse(const cv::Mat& depth_data, const Eigen::Affine3f& w
   // Upload the depth data to the GPU for this round of fusion
   depthDevice_.upload(depth_data.data, depth_data.step, depth_data.rows, depth_data.cols);
 
-  // Launch the fusion process
-  kfusion::Affine3f icp_movement_tmp = icp_movement;
+  // declare a kfusion::Affine3f (cv::Affine3f) to retrieve the calculated icp transform.
+  kfusion::Affine3f icp_movement_tmp = kfusion::Affine3f::Identity();
+
+  // Launch the fusion process.
   bool result = kinfu_->operator()(motion, current_camera_in_volume, last_camera_pose_, depthDevice_, icp_movement_tmp);
+
+  // cast the kfusion::Affine3f (cv::Affine3f) to an Eigen::Affine3f to pass out the icp results
   icp_movement = icp_movement_tmp;
 
   // Update the "last camera pose" TODO: Do I update this if the fusion step failed?

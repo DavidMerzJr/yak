@@ -108,18 +108,22 @@ public:
   void resetPose();
   void resetVolume();
 
+  /** @brief main function for adding new depth images to TSDF.  Overloads permit various
+   * parameter combinations, including supplying a cuda image or getting ICP transforms out. */
   bool operator()(const Affine3f& inputCameraMotion,
                   const Affine3f& currentCameraPose,
                   const Affine3f& previousCameraPose,
                   const cuda::Depth& depth,
                   const cuda::Image& image = cuda::Image());
 
+  /** @brief overload of operator() to allow returning of ICP transform. */
   bool operator()(const Affine3f& inputCameraMotion,
                   const Affine3f& currentCameraPose,
                   const Affine3f& previousCameraPose,
                   const cuda::Depth& depth,
                   Affine3f& icp_movement);
 
+  /** @brief the other overloads of operator() call this implementation. */
   bool operator()(const Affine3f& inputCameraMotion,
                   const Affine3f& currentCameraPose,
                   const Affine3f& previousCameraPose,

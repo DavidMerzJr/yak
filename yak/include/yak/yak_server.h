@@ -26,8 +26,10 @@ class FusionServer
 public:
   FusionServer(const kfusion::KinFuParams& params, const Eigen::Affine3f& world_to_volume);
 
+  /** @brief fuse() integrates a depth image into TSDF */
   bool fuse(const cv::Mat& depth_data, const Eigen::Affine3f& world_to_camera);
 
+  /** @brief overload of fuse() that allows the extraction of computed ICP transforms */
   bool fuse(const cv::Mat& depth_data, const Eigen::Affine3f& world_to_camera, Eigen::Affine3f& icp_movement);
 
   bool reset();

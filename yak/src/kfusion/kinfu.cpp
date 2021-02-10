@@ -27,10 +27,10 @@ kfusion::KinFuParams kfusion::KinFuParams::default_params()
   p.bilateral_sigma_spatial = 4.5;  // pixels
   p.bilateral_kernel_size = 7;      // pixels
 
-  p.icp_truncate_depth_dist = 0.f;    // meters, disabled
-  p.icp_dist_thres = 0.1f;            // meters
+  p.icp_truncate_depth_dist = 0.f;          // meters, disabled
+  p.icp_dist_thres = 0.1f;                  // meters
   p.icp_final_dist_thres = 1.0f;            // meters
-  p.icp_angle_thres = deg2rad(30.f);  // radians
+  p.icp_angle_thres = deg2rad(30.f);        // radians
   p.icp_final_angle_thres = deg2rad(90.f);  // radians
   p.icp_iter_num.assign(iters, iters + levels);
 
@@ -61,13 +61,12 @@ kfusion::KinFu::KinFu(const KinFuParams& params) : frame_counter_(0), params_(pa
                    params_.volume_dims[1] * params_.volume_resolution,
                    params_.volume_dims[2] * params_.volume_resolution);
   volume_->setSize(volumeSize);
-  //This is not enough to translate the actual volume; still @ world 0
-  //volume_->setPose(params_.volume_pose);
+  // This is not enough to translate the actual volume; still @ world 0
+  // volume_->setPose(params_.volume_pose);
 
   volume_->setRaycastStepFactor(params_.raycast_step_factor);
   volume_->setGradientDeltaFactor(params_.gradient_delta_factor);
 
-  // TODO: Modify ICP to optionally use TF pose as hint for camera pose calculation.
   icp_ = std::shared_ptr<cuda::ProjectiveICP>(new cuda::ProjectiveICP());
   icp_->setDistThreshold(params_.icp_dist_thres);
   icp_->setAngleThreshold(params_.icp_angle_thres);
@@ -272,21 +271,21 @@ bool kfusion::KinFu::operator()(const Affine3f& inputCameraMotion,
       cameraPoseCorrected = previousCameraPose * cameraMotionCorrected;
       if (!ok)
       {
-        std::cout << "[YAK_ERROR][209136.192011316]: Using supplied pose because ICP failed\n";
+        std::cout << "[YAK_ERROR]: Using supplied pose because ICP failed\n";
       }
       else if (static_cast<float>(cv::norm(icp_movement.translation())) > params_.icp_final_dist_thres)
       {
-        std::cout << "[YAK_ERROR][209136.192011316]: Using supplied pose because ICP moved too far " << cv::norm(icp_movement.translation()) << " " << params_.icp_final_dist_thres << "\n";
+        std::cout << "[YAK_ERROR]: Using supplied pose because ICP moved too far: " << cv::norm(icp_movement.translation()) << " > " << params_.icp_final_dist_thres << "\n";
         ok = false;
       }
       else if (static_cast<float>(cv::norm(icp_movement.rvec())) > params_.icp_final_angle_thres)
       {
-        std::cout << "[YAK_ERROR][209136.192011316]: Using supplied pose because ICP rotated too far\n";
+        std::cout << "[YAK_ERROR]: Using supplied pose because ICP rotated too far: \n";
         ok = false;
       }
       else
       {
-        std::cout << "[YAK_INFO ][209136.192011316]: ICP succeeded, using modified pose\n";
+        std::cout << "[YAK_INFO]: ICP succeeded, using modified pose\n";
       }
     }
     // else
